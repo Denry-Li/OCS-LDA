@@ -15,6 +15,7 @@ copy of the full research workspace.
 | Final autoencoder and training | `models/ocs_lda.py`, `models/ocs_lda_blocks.py`, `train_bohai.py`, `dataset_bohai.py`, `loss_bohai.py` |
 | Six-hour forecast inference | `models/BohaiForecastNet.py`, `models/SwimIRv2.py`, `forecast_inference.py`, `forecast_time_features.py` |
 | Point observations | `utils/point_observation_operator.py` |
+| Full-year synthetic OSSE observations | `utils/generate_gdas_osse_observations_yearly.py` |
 | Hybrid latent 3D-Var | `run_ocs_lda.py`, `cycling_3dvar_bohai.py`, `latent_3dvar_bohai.py` |
 | Uniform evaluation | `evaluate_cycling.py` |
 
@@ -31,18 +32,21 @@ and six-hour forecast model configurations are retained under `configs/`.
 ## External inputs
 
 The repository does not include original ERA5 or GDAS material, synthetic
-observations, trained checkpoints, covariance binaries, or annual analysis
+observations, the prepared GDAS network NetCDF, trained checkpoints, covariance binaries, or annual analysis
 states. A complete run requires the matching ERA5 nature-run and initialization
 files, OSSE observation NetCDF, normalization statistics, trained OCS-LDA and
 forecast weights, and latent `B_z`. The final YAML files preserve the archived
 paths; map those input fields to their released locations before running.
 
-The covariance calculation scripts, observation-generation scripts, historical
+The covariance calculation scripts, GDAS network-construction scripts, historical
 architecture variants, LDA and Traditional 3D-Var baselines, figure scripts,
 and archived postprocessing are deliberately excluded from this core candidate.
-They remain in the private full-code archive. This repository therefore
-supports re-running OCS-LDA analyses with prepared inputs, not regenerating
-every input from raw source data.
+They remain in the private full-code archive. The included full-year OSSE
+generator takes a prepared GDAS network NetCDF and the matching ERA5 nature-run
+NetCDF; it does not download GDAS or build the network from raw GDAS files.
+This repository therefore supports re-running OCS-LDA analyses with prepared
+inputs and regenerating synthetic observations from those two prepared inputs,
+not rebuilding every input from raw source data.
 
 ## Run and evaluate
 
@@ -59,6 +63,12 @@ For each variable, it first computes the metric at each cycle and then averages
 over the evaluated cycles. The reported background-to-analysis RMSE reduction
 is calculated from annual mean RMSE values; it is not a comparison with LDA.
 The first eight cycles are excluded by default.
+
+To regenerate the full-year synthetic observations from prepared inputs:
+
+```bash
+python utils/generate_gdas_osse_observations_yearly.py --network path/to/network.nc --era5 path/to/era5_nature_run.nc --output path/to/osse_observations.nc --seed 42 --audit-dir path/to/osse_audit
+```
 
 ## Validation and limits
 
