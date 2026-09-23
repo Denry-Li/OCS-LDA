@@ -1,0 +1,168 @@
+# PhySP_AEv4 independent-Hub-gate baseline.
+# All data, encoder, PatchExpand decoder, optimizer, loss, and seed settings
+# match the PhySP_AEv3 U4 PatchExpand seed-42 experiment. Only the model
+# registration, experiment directory, and V4 gate controls differ.
+# Regional configuration: one full-resolution hierarchical-encoder stage,
+# with the remaining 4x spatial compression performed by the bottleneck.
+# The hierarchical decoder restores 10 -> 20 -> 40. Shared uses Swin at
+# 10/20 and GeoConv at 40; semantic group decoders retain Swin at all three
+# regional scales so selective latent control remains expressive.
+# Input and target are both standardized ERA5 fields. GFS is only used later
+# as a background field, standardized with the same ERA5 statistics.
+
+exp_dir: experiments/Hyperparameter Optimization/search_latent_dim/D32_mse_seed42
+
+data_format: bohai_yearly
+samples_root: data/samples/yearly_simvp_extent
+norm_stats_path: data/stats/norm_stats_train.json
+
+train_years: [2016, 2017, 2018, 2019, 2020, 2021]
+valid_years: [2022]
+test_years: [2023, 2024]
+
+model_arch: physp_aev4
+
+# Canonical 5-variable order for this experiment. Keep this order in B_z,
+# 3DVar, metrics, spatial plots, and branch diagnostics.
+input_vars:
+  - era5_u10
+  - era5_v10
+  - era5_t2m
+  - era5_d2m
+  - era5_sp
+
+target_vars:
+  - era5_u10
+  - era5_v10
+  - era5_t2m
+  - era5_d2m
+  - era5_sp
+
+ccmp_vars: []
+static_vars: []
+
+in_chans: 5
+out_chans: 5
+
+# Cropped yearly samples are 40x40 on the SimVP horizontal extent.
+img_size_x: 40
+img_size_y: 40
+patch_size: 1
+window_size: 5
+upscale: 1
+
+img_range: 1.0
+embed_dim: 64
+latent_dim: 32
+latent_downsample: 4
+bottleneck_window_size: 5
+
+# Scale-configurable hierarchical encoder. For the 40x40 Bohai-Yellow Sea
+# experiment, keep the encoder at full resolution and use a single stage.
+stem_downsample: 1
+encoder_merges: 0
+encoder_dim_mode: fixed
+encoder_depths: [4]
+encoder_num_heads: [4]
+encoder_longitude_periodic: false
+encoder_latitude_padding: replicate
+
+bottleneck_depths: [1]
+bottleneck_num_heads: [4]
+
+# Unified hierarchical decoder. A positive depth selects a same-resolution
+# Swin stage; depth=0 selects a GeoConv residual block at that scale.
+decoder_window_size: 5
+decoder_longitude_periodic: false
+decoder_latitude_padding: replicate
+decoder_geo_separable: false
+decoder_output_kernel_size: 3
+decoder_upsample_type: patch_expand
+
+# Scale order is latent-to-grid: 10x10, 20x20, 40x40.
+shared_decoder_dims: [64, 64, 32]
+shared_decoder_depths: [2, 1, 0]
+shared_decoder_num_heads: [4, 4, 1]
+
+group_decoder_dims: [64, 48, 32]
+group_decoder_depths: [2, 1, 1]
+group_decoder_num_heads: [4, 4, 4]
+
+# Compatibility defaults used by shared model/training utilities.
+depths: [2, 2]
+num_heads: [2, 4]
+mlp_ratio: 2.0
+num_feat: 64
+
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.05
+
+ape: false
+patch_norm: true
+use_checkpoint: false
+resi_connection: 1conv
+qkv_bias: true
+qk_scale: null
+
+# Group definitions follow target_vars order: [u10, v10, t2m, d2m, sp].
+group_indices:
+  wind: [0, 1]
+  thermo_moist: [2, 3]
+  pressure: [4]
+
+stem_channels:
+  wind: 20
+  thermo_moist: 20
+  pressure: 12
+
+branch_channels:
+  shared: 12
+  wind: 8
+  thermo_moist: 8
+  pressure: 4
+
+branch_proj_alpha_init: 0.0
+hub_beta_init: 0.0
+hub_gate_init:
+  wind: 0.0
+  thermo_moist: 0.0
+  pressure: 0.0
+hub_gate_max: 1.0
+hub_gate_trainable: true
+
+optimizer: AdamW
+lr: 0.0003
+min_lr: 0.000001
+weight_decay: 0.0001
+scheduler: CosineAnnealingLR
+
+loss_type: structured_ae
+structured_loss_mode: mse
+structured_huber_delta: 0.1
+lambda_structured_low: 0.0
+lambda_structured_orth: 0.0
+structured_lowpass_type: gaussian
+structured_low_kernel_size: 5
+structured_low_sigma: 1.0
+
+batch_size: 64
+num_workers: 8
+persistent_workers: false
+max_epochs: 400
+valid_frequency: 1
+save_frequency: 5
+early_stopping_patience: 12
+early_stopping_min_delta: 0.000001
+enable_amp: true
+grad_clip: 1.0
+seed: 42
+
+latent_bz:
+  type: diagonal
+
+three_dvar:
+  background_source: gfs
+  optimize_variable: latent_state
+  obs_variables: [ccmp_u10, ccmp_v10]
+  control_branches: [full, shared, wind, shared_wind]

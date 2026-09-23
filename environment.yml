@@ -1,0 +1,21 @@
+name: ocs-lda-reproduction
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10.20
+  - numpy=2.2.6
+  - pandas=2.3.3
+  - xarray=2025.6.1
+  - scipy=1.15.3
+  - matplotlib=3.10.9
+  - netcdf4=1.7.4
+  - pyyaml=6.0.3
+  - tqdm=4.67.3
+  - pyarrow=23.0.1
+  - pip
+  - pip:
+      - torch==2.11.0
+      - einops==0.8.1
+      - timm==1.0.15
