@@ -16,7 +16,7 @@ cycling and evaluation entry points from the repository root with `python -m`;
 
 ## Data and model artifacts
 
-The companion [Zenodo dataset record](https://zenodo.org/records/22915966) contains the author-generated 2022–2023 full-observation OSSE files, a minimum evaluation/source-data package, and these three artifacts for the D32 hybrid-C experiment:
+The companion [Zenodo dataset](https://doi.org/10.5281/zenodo.22915966) contains the author-generated 2022–2023 full-observation OSSE files, a minimum evaluation/source-data package, and these three artifacts for the D32 hybrid-C experiment:
 
 | File | Purpose |
 |---|---|
@@ -24,7 +24,7 @@ The companion [Zenodo dataset record](https://zenodo.org/records/22915966) conta
 | `ai6h_stage2_ar4_best.pt` | Trained six-hour forecast model checkpoint |
 | `ocs_lda_D32_hybrid_C.pt` | Fitted D32 hybrid-C latent background-error covariance (`B_z`) |
 
-The record is currently an unpublished draft; the link will become publicly accessible when the authors publish the deposit. The permanent dataset DOI will be added after registration. See the [reproducibility guide](REPRODUCIBILITY.md) for the environment, required external inputs, path mapping, commands, and result checks. In particular, the full ERA5 regional nature-run and initialization states are **not** bundled with these five Zenodo files.
+The published dataset DOI is [10.5281/zenodo.22915966](https://doi.org/10.5281/zenodo.22915966). See the [reproducibility guide](REPRODUCIBILITY.md) for the environment, required external inputs, path mapping, commands, and result checks. In particular, the full ERA5 regional nature-run and initialization states are **not** bundled with these five Zenodo files.
 
 Original ERA5 and GDAS/PREPBUFR records are not redistributed in this repository. Obtain them from the [Copernicus Climate Data Store](https://doi.org/10.24381/cds.adbb2d47) and [NOAA NCEI](https://www.ncei.noaa.gov/products/weather-climate-models/global-data-assimilation), respectively.
 

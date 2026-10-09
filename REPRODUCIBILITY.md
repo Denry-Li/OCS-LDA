@@ -1,6 +1,6 @@
 # OCS-LDA: code and reproducibility guide
 
-**Release candidate.** Source is provided under Apache-2.0 for the authors' licensable contributions, with upstream SwinIR/Swin Transformer/KAIR conditions documented in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). The GitHub repository remains private until the authors publish it; no public software DOI is claimed here.
+Source is publicly available under Apache-2.0 for the authors' licensable contributions, with upstream SwinIR/Swin Transformer/KAIR conditions documented in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). No separate software DOI is claimed here.
 
 The formal OCS-LDA experiments have been rerun in the authors' research
 environment. This compact repository documents the inputs, commands and checks
@@ -83,10 +83,11 @@ preprocessing chain from those upstream products to the formal 40 × 40 inputs.
 
 The author-generated 2022–2023 synthetic OSSE observations, minimum
 figure/evaluation dataset, and three D32 model artifacts are in the companion
-[Zenodo Dataset draft](https://zenodo.org/records/22915966). The three artifact
+[published Zenodo dataset](https://doi.org/10.5281/zenodo.22915966). The three artifact
 files are `D32_best.pt`, `ai6h_stage2_ar4_best.pt`, and
-`ocs_lda_D32_hybrid_C.pt`. The record remains unpublished; its final DOI must
-be inserted here after publication. The data record uses CC BY 4.0 for the
+`ocs_lda_D32_hybrid_C.pt`. The dataset DOI is
+[`10.5281/zenodo.22915966`](https://doi.org/10.5281/zenodo.22915966).
+The data record uses CC BY 4.0 for the
 authors' generated material; it does not
 relicense original ERA5 or GDAS/PREPBUFR data.
 
@@ -183,5 +184,5 @@ The authors' licensable contributions are provided under Apache-2.0 (`LICENSE`).
 Adapted SwinIR-family portions retain their upstream attribution and
 applicable Apache-2.0/MIT notices in `THIRD_PARTY_NOTICES.md` and
 `THIRD_PARTY_LICENSES/`. The external LDA comparator is not redistributed or
-relicensed here. A permanent software DOI is a separate release step; none
-is claimed in this draft.
+relicensed here. A permanent software DOI would require a separate software
+archive; none is claimed for this GitHub repository.
