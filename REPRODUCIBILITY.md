@@ -12,12 +12,12 @@ bundled in Git.
 
 | Purpose | Files |
 |---|---|
-| Final autoencoder and training | `models/ocs_lda.py`, `models/ocs_lda_blocks.py`, `train_bohai.py`, `dataset_bohai.py`, `loss_bohai.py` |
-| Six-hour forecast inference | `models/BohaiForecastNet.py`, `models/SwimIRv2.py`, `forecast_inference.py`, `forecast_time_features.py` |
+| Final autoencoder and training | `models/ocs_lda.py`, `models/ocs_lda_blocks.py`, `ocs_lda/train_bohai.py`, `ocs_lda/dataset_bohai.py`, `ocs_lda/loss_bohai.py` |
+| Six-hour forecast inference | `models/BohaiForecastNet.py`, `models/SwimIRv2.py`, `ocs_lda/forecast_inference.py`, `ocs_lda/forecast_time_features.py` |
 | Point observations | `utils/point_observation_operator.py` |
 | Full-year synthetic OSSE observations | `utils/generate_gdas_osse_observations_yearly.py` |
-| Hybrid latent 3D-Var | `run_ocs_lda.py`, `cycling_3dvar_bohai.py`, `latent_3dvar_bohai.py` |
-| Uniform evaluation | `evaluate_cycling.py` |
+| Hybrid latent 3D-Var | `ocs_lda/run_ocs_lda.py`, `ocs_lda/cycling_3dvar_bohai.py`, `ocs_lda/latent_3dvar_bohai.py` |
+| Uniform evaluation | `ocs_lda/evaluate_cycling.py` |
 
 The historical configuration key `PhySP_DA` and model class `PhySP_AEv4`
 are retained for compatibility with the formal checkpoint. They denote the
@@ -107,8 +107,8 @@ training samples and 2022 validation samples expected by the respective
 configuration's `samples_root`. Work on local YAML copies with mapped paths:
 
 ```bash
-python train_bohai.py --config configs/local/physp_v4_d32_mse_seed42.yaml --device cuda:0
-python train_bohai.py --config configs/local/bohai_forecast_net_era5_5var_40x40_nodown_time2_ar4.yaml --device cuda:0
+python -m ocs_lda.train_bohai --config configs/local/physp_v4_d32_mse_seed42.yaml --device cuda:0
+python -m ocs_lda.train_bohai --config configs/local/bohai_forecast_net_era5_5var_40x40_nodown_time2_ar4.yaml --device cuda:0
 ```
 
 The original training YAML files are under
@@ -122,8 +122,8 @@ final YAML. The following `configs/local/` path is an example local copy, not
 a file supplied by this repository:
 
 ```bash
-python run_ocs_lda.py --config configs/local/fullobs_ocs_lda.yaml --output-dir outputs/fullobs --device cuda:0
-python evaluate_cycling.py --run-dir outputs/fullobs --output-dir outputs/fullobs/evaluation --warmup 8 --expected-cycles 1460
+python -m ocs_lda.run_ocs_lda --config configs/local/fullobs_ocs_lda.yaml --output-dir outputs/fullobs --device cuda:0
+python -m ocs_lda.evaluate_cycling --run-dir outputs/fullobs --output-dir outputs/fullobs/evaluation --warmup 8 --expected-cycles 1460
 ```
 
 The runner refuses to overwrite a non-empty output directory by default.
@@ -185,4 +185,3 @@ applicable Apache-2.0/MIT notices in `THIRD_PARTY_NOTICES.md` and
 `THIRD_PARTY_LICENSES/`. The external LDA comparator is not redistributed or
 relicensed here. A permanent software DOI is a separate release step; none
 is claimed in this draft.
-

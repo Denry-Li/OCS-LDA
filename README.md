@@ -5,10 +5,14 @@ This repository contains the core implementation of observation-conditioned stru
 ## Contents
 
 - Structured autoencoder: [`models/ocs_lda.py`](models/ocs_lda.py) and [`models/ocs_lda_blocks.py`](models/ocs_lda_blocks.py)
-- Autoencoder training and six-hour forecast model: [`train_bohai.py`](train_bohai.py) and [`models/BohaiForecastNet.py`](models/BohaiForecastNet.py)
+- Autoencoder training and six-hour forecast model: [`ocs_lda/train_bohai.py`](ocs_lda/train_bohai.py) and [`models/BohaiForecastNet.py`](models/BohaiForecastNet.py)
 - Point-observation operator and OSSE generation: [`utils/point_observation_operator.py`](utils/point_observation_operator.py) and [`utils/generate_gdas_osse_observations_yearly.py`](utils/generate_gdas_osse_observations_yearly.py)
-- Hybrid-`B_z` cycling assimilation and evaluation: [`run_ocs_lda.py`](run_ocs_lda.py) and [`evaluate_cycling.py`](evaluate_cycling.py)
+- Hybrid-`B_z` cycling assimilation and evaluation: [`ocs_lda/run_ocs_lda.py`](ocs_lda/run_ocs_lda.py) and [`ocs_lda/evaluate_cycling.py`](ocs_lda/evaluate_cycling.py)
 - Final experiment configurations: [`configs/final/`](configs/final/)
+
+The Python implementation lives in the `ocs_lda/` package. Run its training,
+cycling and evaluation entry points from the repository root with `python -m`;
+`environment.yml` stays at the root for environment setup.
 
 ## Data and model artifacts
 
@@ -31,4 +35,3 @@ The OCS-LDA manuscript is under preparation. The paper citation and link will be
 ## Licence
 
 The authors' licensable code contributions are under [Apache-2.0](LICENSE). The author-generated Zenodo dataset is under CC BY 4.0; the original ERA5 and GDAS/PREPBUFR products retain their own terms. Adapted Swin-family components and applicable notices are identified in [Third-party notices](THIRD_PARTY_NOTICES.md). The external LDA comparator is not bundled.
-

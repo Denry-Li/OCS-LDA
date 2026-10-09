@@ -13,12 +13,12 @@ from pathlib import Path
 import torch
 import yaml
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import cycling_3dvar_bohai as cycling
-import latent_3dvar_bohai as latent
+from ocs_lda import cycling_3dvar_bohai as cycling
+from ocs_lda import latent_3dvar_bohai as latent
 
 _ORIGINAL_SELECT = cycling.select_latent_bz_mode
 _ORIGINAL_CHANNEL_LOSS = latent.channel_background_loss
@@ -94,7 +94,7 @@ def install_hybrid_c(config):
 def main():
     if "--help" in sys.argv or "-h" in sys.argv:
         print(
-            "Usage: python run_ocs_lda.py --config CONFIG "
+            "Usage: python -m ocs_lda.run_ocs_lda --config CONFIG "
             "--output-dir DIR [--device auto|cpu|cuda:0]"
         )
         return

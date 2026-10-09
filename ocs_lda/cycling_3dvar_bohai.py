@@ -19,14 +19,14 @@ import xarray as xr
 import yaml
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from forecast_inference import load_config as load_forecast_config
-from forecast_inference import load_model as load_forecast_model
-from forecast_time_features import build_time_features
-from latent_3dvar_bohai import (
+from ocs_lda.forecast_inference import load_config as load_forecast_config
+from ocs_lda.forecast_inference import load_model as load_forecast_model
+from ocs_lda.forecast_time_features import build_time_features
+from ocs_lda.latent_3dvar_bohai import (
     branch_background_loss,
     branch_increment_logs,
     branch_slices_from_model,

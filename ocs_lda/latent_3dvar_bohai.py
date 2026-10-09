@@ -11,8 +11,8 @@ import xarray as xr
 import yaml
 from tqdm import tqdm
 
-from dataset_bohai import build_dataloader
-from train_bohai import AttrDict, channelwise_metrics, configure_loss_from_type
+from ocs_lda.dataset_bohai import build_dataloader
+from ocs_lda.train_bohai import AttrDict, channelwise_metrics, configure_loss_from_type
 from utils.point_observation_operator import (
     GdasOssePointObsLoader,
     point_observation_loss,

@@ -1,4 +1,4 @@
-﻿# train_bohai.py
+# train_bohai.py
 
 import os
 import time
@@ -27,8 +27,8 @@ from tqdm import tqdm
 
 import matplotlib.pyplot as plt
 
-from dataset_bohai import build_dataloader
-from loss_bohai import BohaiCompositeLoss
+from ocs_lda.dataset_bohai import build_dataloader
+from ocs_lda.loss_bohai import BohaiCompositeLoss
 
 # ============================================================
 # Basic utilities
@@ -220,10 +220,10 @@ def setup_distributed(device_arg: str = "auto", gpu_arg: int | None = None):
     """
     Supports both:
       1. single GPU / CPU:
-         python train_bohai.py --config xxx.yaml --device cuda:1
+         python -m ocs_lda.train_bohai --config xxx.yaml --device cuda:1
 
       2. DDP:
-         torchrun --nproc_per_node=2 train_bohai.py --config xxx.yaml
+         torchrun --nproc_per_node=2 -m ocs_lda.train_bohai --config xxx.yaml
     """
     if "LOCAL_RANK" in os.environ and "WORLD_SIZE" in os.environ:
         dist.init_process_group(backend="nccl")
