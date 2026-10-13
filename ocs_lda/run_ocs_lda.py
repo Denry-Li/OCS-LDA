@@ -41,9 +41,9 @@ def install_hybrid_c(config):
     mode = config.get("experiment_pressure_parameterization", "block")
     if mode not in {"block", "spatial_diagonal", "channel_diagonal"}:
         raise ValueError(f"Unsupported Pressure parameterization: {mode}")
-    if config["physp_bz_scale"] != 1.0:
-        raise ValueError("Formal hybrid-C configuration requires physp_bz_scale=1")
-    if not all(value == 1.0 for value in config["physp_bz_branch_scales"].values()):
+    if config["ocs_lda_bz_scale"] != 1.0:
+        raise ValueError("Formal hybrid-C configuration requires ocs_lda_bz_scale=1")
+    if not all(value == 1.0 for value in config["ocs_lda_bz_branch_scales"].values()):
         raise ValueError("Formal hybrid-C branch scales must all equal 1")
     full_slices = {}
 
@@ -57,7 +57,7 @@ def install_hybrid_c(config):
 
     def select(background, kind, name, branch_names=None):
         selected = _ORIGINAL_SELECT(background, kind, name, branch_names)
-        if name != "PhySP_DA" or mode == "block":
+        if name != "OCS-LDA" or mode == "block":
             return selected
         if kind != "semantic_branch_block":
             raise ValueError("Hybrid C requires semantic_branch_block B_z")
@@ -72,7 +72,7 @@ def install_hybrid_c(config):
             item.pop("cov_loaded", None)
         else:
             diagonal = latent.load_latent_bz(
-                config["physp_bz"],
+                config["ocs_lda_bz"],
                 item["cholesky"].device,
                 item_names=["latent"],
                 load_covariance=False,
@@ -89,6 +89,7 @@ def install_hybrid_c(config):
 
     cycling.select_latent_bz_mode = select
     latent.channel_background_loss = _mixed_channel_loss
+    cycling._HYBRID_C_INSTALLED = True
 
 
 def main():

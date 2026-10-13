@@ -1,7 +1,5 @@
-# PhySP_AEv4 independent-Hub-gate baseline.
-# All data, encoder, PatchExpand decoder, optimizer, loss, and seed settings
-# match the PhySP_AEv3 U4 PatchExpand seed-42 experiment. Only the model
-# registration, experiment directory, and V4 gate controls differ.
+# OCS-LDA D32 five-variable model. Architecture and numerical settings match
+# the existing trained checkpoint; only the public model name is changed.
 # Regional configuration: one full-resolution hierarchical-encoder stage,
 # with the remaining 4x spatial compression performed by the bottleneck.
 # The hierarchical decoder restores 10 -> 20 -> 40. Shared uses Swin at
@@ -20,7 +18,7 @@ train_years: [2016, 2017, 2018, 2019, 2020, 2021]
 valid_years: [2022]
 test_years: [2023, 2024]
 
-model_arch: physp_aev4
+model_arch: ocs_lda
 
 # Canonical 5-variable order for this experiment. Keep this order in B_z,
 # 3DVar, metrics, spatial plots, and branch diagnostics.

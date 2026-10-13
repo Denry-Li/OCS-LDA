@@ -408,20 +408,7 @@ def forward_model(model, inp: torch.Tensor, batch: dict, cfg) -> torch.Tensor:
     orth_cfg = dict(cfg.get("orth_loss", {}) or {})
     model_arch = str(cfg.get("model_arch", "")).lower()
     loss_type = str(cfg.get("loss_type", "")).lower()
-    if model_arch in {
-        "structured_swim_ae",
-        "structed_swim_ae",
-        "structured_swim_ae_refine",
-        "structed_swim_ae_refine",
-        "physp_ae",
-        "physp_swin_ae",
-        "physical_shared_private_ae",
-        "physp_aev2",
-        "physp_aev3",
-        "physp_aev4",
-        "structured_swim_ae_v2",
-        "structured_swin_ae_v2",
-    } or loss_type == "structured_ae":
+    if model_arch == "ocs_lda" or loss_type == "structured_ae":
         out = model(inp, return_parts=True)
         if isinstance(out, dict) and "full" not in out and "x_hat" in out:
             out["full"] = out["x_hat"]
@@ -1026,67 +1013,12 @@ def main():
     # ----------------------------
     # Model
     # ----------------------------
-    model_arch = str(cfg.get("model_arch", "encdec")).lower()
-    if model_arch == "swim_ir_v2":
-        from models.SwimIRv2 import SwimIRv2
+    model_arch = str(cfg.get("model_arch", "ocs_lda")).lower()
+    if model_arch != "ocs_lda":
+        raise ValueError(f"Unsupported training model_arch={model_arch!r}")
+    from ocs_lda.model import OCSLDA
 
-        model = SwimIRv2(cfg).to(device)
-    elif model_arch == "swim_ir_v3":
-        from models.SwimIRv3 import SwimIRv3
-
-        model = SwimIRv3(cfg).to(device)
-    elif model_arch == "hat":
-        from models.hat_bohai import HATBohai
-
-        model = HATBohai(cfg).to(device)
-    elif model_arch == "swim_ir_ae":
-        from models.SwimIR_AE import SwimIR_AE
-
-        model = SwimIR_AE(cfg).to(device)
-    elif model_arch in {"shared_private_swim_ir_ae", "shared_private_swimir_ae"}:
-        from models.SharedPrivateSwimIR_AE import SharedPrivateSwimIR_AE
-
-        model = SharedPrivateSwimIR_AE(cfg).to(device)
-    elif model_arch in {"structured_swim_ae", "structed_swim_ae"}:
-        from models.StructedSwimAE import StructuredSwinAE
-
-        model = StructuredSwinAE(cfg).to(device)
-    elif model_arch in {"structured_swim_ae_refine", "structed_swim_ae_refine"}:
-        from models.ocs_lda_blocks import StructuredSwinAERefine
-
-        model = StructuredSwinAERefine(cfg).to(device)
-    elif model_arch in {"physp_ae", "physp_swin_ae", "physical_shared_private_ae"}:
-        from models.PhySP_AE import PhySP_AE
-
-        model = PhySP_AE(cfg).to(device)
-    elif model_arch == "physp_aev2":
-        from models.PhySP_AEv2 import PhySP_AEv2
-
-        model = PhySP_AEv2(cfg).to(device)
-    elif model_arch == "physp_aev3":
-        from models.ocs_lda import PhySP_AEv3
-
-        model = PhySP_AEv3(cfg).to(device)
-    elif model_arch == "physp_aev4":
-        from models.ocs_lda import PhySP_AEv4
-
-        model = PhySP_AEv4(cfg).to(device)
-    elif model_arch in {"structured_swim_ae_v2", "structured_swin_ae_v2"}:
-        from models.StructuredSwinAEv2 import StructuredSwinAEv2
-
-        model = StructuredSwinAEv2(cfg).to(device)
-    elif model_arch == "lda_vit_ae":
-        from models.LDA_ViT_AE import LDA_ViT_AE
-
-        model = LDA_ViT_AE(cfg).to(device)
-    elif model_arch == "lda141_ae":
-        from models.LDA141_AE import LDA141_AE
-
-        model = LDA141_AE(cfg).to(device)
-    else:
-        from models.encdec import EncDec
-
-        model = EncDec(cfg).to(device)
+    model = OCSLDA(cfg).to(device)
 
     if distributed:
         model = DDP(

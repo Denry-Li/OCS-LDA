@@ -32,9 +32,9 @@ def summarize(run_dir: Path, output_dir: Path, warmup: int, expected_cycles: int
     missing = sorted(REQUIRED_COLUMNS - set(frame.columns))
     if missing:
         raise ValueError(f"Missing metric columns in {source}: {missing}")
-    frame = frame.loc[frame["method"] == "PhySP_DA"].copy()
+    frame = frame.loc[frame["method"] == "OCS-LDA"].copy()
     if frame.empty:
-        raise ValueError(f"No PhySP_DA rows in {source}")
+        raise ValueError(f"No OCS-LDA rows in {source}")
     frame["time"] = pd.to_datetime(frame["time"], errors="raise")
     if frame.duplicated(["variable", "time"]).any():
         raise ValueError("Duplicate variable/time rows in per-cycle metrics")

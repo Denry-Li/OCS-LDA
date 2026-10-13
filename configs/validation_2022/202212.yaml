@@ -1,0 +1,72 @@
+seed: 42
+cpu_threads: 16
+deterministic_algorithms: true
+variables:
+- era5_u10
+- era5_v10
+- era5_t2m
+- era5_d2m
+- era5_sp
+forecast_config: configs/3DVar/bohai_forecast_net_era5_5var_40x40_nodown_time2_ar4.yaml
+forecast_checkpoint: experiments/3DVar/bohai_forecast_net_era5_5var_40x40_nodown_time2/stage2_ar4/checkpoints/best.pt
+lda_config: configs/Hyperparameter Optimization/search_lda_latent_dim/lda_d32_mse_seed42.yaml
+lda_checkpoint: experiments/Hyperparameter Optimization/search_lda_latent_dim/D32_mse_seed42/checkpoints/best.pt
+ocs_lda_config: configs/final/ocs_lda_d32_model.yaml
+ocs_lda_checkpoint: experiments/Hyperparameter Optimization/search_latent_dim/D32_mse_seed42/checkpoints/best.pt
+norm_stats: data/stats/norm_stats_train.json
+initialization_file: data/GDAS/OSSE_2022_VALIDATION_FULL/era5_nature_2022_bohai_40x40_complete.nc
+nature_file: data/GDAS/OSSE_2022_VALIDATION_FULL/era5_nature_2022_bohai_40x40_complete.nc
+observation_file: data/GDAS/OSSE_2022_VALIDATION_FULL/gdas_osse_obs_2022_bohai_jan31_repeat_seed42.nc
+observation_network: extended
+observation_variables:
+- era5_u10
+- era5_v10
+- era5_t2m
+- era5_d2m
+- era5_sp
+evaluation_warmup_cycles: 8
+checkpoint_mode: rolling
+checkpoint_interval_cycles: 40
+traditional_bx: experiments/cycling_3DVar/covariance/NMC/Traditional_24m12_raw_2016_2021/Bx_nmc_24m12_raw_train2016_2021.pt
+lda_bz: experiments/cycling_3DVar/covariance/NMC/lda_latent_dim_ablation_24m12/D32/LDA_24m12_diagonal_2016_2021/Bz_nmc_24m12_diagonal_train2016_2021.pt
+ocs_lda_bz: experiments/cycling_3DVar/covariance/NMC/latent_dim_ablation_24m12_hybrid_C/D32_24m12_raw_2016_2021/Bz_nmc_raw_train2016_2021.pt
+traditional_variance_mode: spatial
+lda_bz_mode: elementwise_diagonal
+ocs_lda_bz_mode: semantic_branch_block
+ocs_lda_active_branches:
+- shared
+- wind
+- thermo_moist
+- pressure
+ocs_lda_analysis_decode_mode: absolute_latent_state
+bx_scale: 1.0
+lda_bz_scale: 1.0
+ocs_lda_bz_scale: 1.0
+ocs_lda_bz_branch_scales:
+  shared: 1.0
+  wind: 1.0
+  thermo_moist: 1.0
+  pressure: 1.0
+r_scale: 1.0
+gaussian_sigma: 5.65685424949238
+gaussian_radius: 17
+optimizer: Adam
+optimizer_lr: 0.01
+traditional_optimizer_lr: 0.03
+lda_optimizer_lr: 0.01
+ocs_lda_optimizer_lr: 0.02
+optimizer_max_steps: 200
+optimizer_grad_clip: 1.0
+early_stopping_patience: 20
+early_stopping_tolerance: 1.0e-06
+methods:
+- OCS-LDA
+initialization_times:
+- '2022-11-30T12:00:00'
+- '2022-11-30T18:00:00'
+start_time: '2022-12-01T00:00:00'
+end_time: '2022-12-31T18:00:00'
+expected_cycles: 124
+expected_evaluation_cycles: 116
+season_label: validation_202212_fullmonth_D32_24m12_hybrid_C
+experiment_pressure_parameterization: spatial_diagonal

@@ -12,18 +12,17 @@ bundled in Git.
 
 | Purpose | Files |
 |---|---|
-| Final autoencoder and training | `models/ocs_lda.py`, `models/ocs_lda_blocks.py`, `ocs_lda/train_bohai.py`, `ocs_lda/dataset_bohai.py`, `ocs_lda/loss_bohai.py` |
+| Final autoencoder and training | `ocs_lda/model.py`, `ocs_lda/structured_autoencoder.py`, `ocs_lda/swin_components.py`, `ocs_lda/train_bohai.py`, `ocs_lda/dataset_bohai.py`, `ocs_lda/loss_bohai.py` |
 | Six-hour forecast inference | `models/BohaiForecastNet.py`, `models/SwimIRv2.py`, `ocs_lda/forecast_inference.py`, `ocs_lda/forecast_time_features.py` |
 | Point observations | `utils/point_observation_operator.py` |
 | Full-year synthetic OSSE observations | `utils/generate_gdas_osse_observations_yearly.py` |
 | Hybrid latent 3D-Var | `ocs_lda/run_ocs_lda.py`, `ocs_lda/cycling_3dvar_bohai.py`, `ocs_lda/latent_3dvar_bohai.py` |
 | Uniform evaluation | `ocs_lda/evaluate_cycling.py` |
 
-The historical configuration key `PhySP_DA` and model class `PhySP_AEv4`
-are retained for compatibility with the formal checkpoint. They denote the
-manuscript's OCS-LDA method. The two model modules were mechanically assembled
-from the archived V3, V4 and shared-block sources; the original project source
-was not modified.
+The model is imported as `ocs_lda.OCSLDA`; the frozen five-variable D32
+checkpoint loads strictly without key conversion. The refactor retains the
+original calculations while replacing historical runtime names. The submitted
+experiment archives and their source code are not modified.
 
 `configs/final/` contains the final 2023 Full-observation, No-SP Selective,
 No-SP Full-update, No-D2M and Shared-off OCS-LDA configurations. The training
@@ -46,17 +45,16 @@ locally remapped copy as the exact executed configuration.**
 | Field in `configs/final/fullobs_ocs_lda.yaml` | Input to supply |
 |---|---|
 | `forecast_checkpoint` | Matching trained forecast weights |
-| `physp_config`, `physp_checkpoint` | Included D32 architecture YAML and matching OCS-LDA weights |
-| `physp_bz` | Fitted D32 semantic-branch covariance with Pressure spatial variance for hybrid C |
+| `ocs_lda_config`, `ocs_lda_checkpoint` | Included D32 architecture YAML and matching OCS-LDA weights |
+| `ocs_lda_bz` | Fitted D32 semantic-branch covariance with Pressure spatial variance for hybrid C |
 | `norm_stats` | Included `data/stats/norm_stats_train.json` |
 | `initialization_file` | ERA5 states at the two configured 2022-12-31 times |
 | `nature_file` | 2023 ERA5 reference states on the 40 × 40 grid |
 | `observation_file` | 2023 OSSE NetCDF with the formal grid, cycle times and observation realization |
 
 The common YAML also contains `lda_*` and `traditional_*` paths. When
-`methods` contains only `PhySP_DA`, those comparator artifacts are **not**
-loaded; they are not additional requirements for an OCS-LDA-only run. The
-`PhySP_DA` method label denotes OCS-LDA in the manuscript.
+`methods` contains only `OCS-LDA`, those comparator artifacts are **not**
+loaded; they are not additional requirements for an OCS-LDA-only run.
 
 The covariance calculation scripts, GDAS network-construction scripts, historical
 architecture variants, LDA and Traditional 3D-Var baselines, figure scripts,
@@ -103,20 +101,19 @@ conda env create -f environment.yml
 conda activate ocs-lda-reproduction
 ```
 
-To retrain the autoencoder or forecast model, first prepare the 2016–2021
-training samples and 2022 validation samples expected by the respective
-configuration's `samples_root`. Work on local YAML copies with mapped paths:
+To retrain the autoencoder, first prepare the 2016–2021 training samples and
+2022 validation samples expected by the configuration's `samples_root`. Work
+on a local YAML copy with mapped paths:
 
 ```bash
-python -m ocs_lda.train_bohai --config configs/local/physp_v4_d32_mse_seed42.yaml --device cuda:0
-python -m ocs_lda.train_bohai --config configs/local/bohai_forecast_net_era5_5var_40x40_nodown_time2_ar4.yaml --device cuda:0
+python -m ocs_lda.train_bohai --config configs/local/ocs_lda_d32_model.yaml --device cuda:0
 ```
 
-The original training YAML files are under
-`configs/Hyperparameter Optimization/search_latent_dim/` and `configs/3DVar/`.
-Retraining requires their prepared training data. The included code does not
-regenerate the formal NMC `B_z`; use the matching archived covariance artifact for the
-reported cycling configuration.
+The D32 training YAML is at `configs/final/ocs_lda_d32_model.yaml`. The
+six-hour forecast inference architecture and weights are included, but this
+compact repository does not include a verified forecast retraining entry point.
+The included code does not regenerate the formal NMC `B_z`; use the matching
+archived covariance artifact for the reported cycling configuration.
 
 Run from the repository root after mapping the input paths in a **copy** of a
 final YAML. The following `configs/local/` path is an example local copy, not
@@ -126,6 +123,10 @@ a file supplied by this repository:
 python -m ocs_lda.run_ocs_lda --config configs/local/fullobs_ocs_lda.yaml --output-dir outputs/fullobs --device cuda:0
 python -m ocs_lda.evaluate_cycling --run-dir outputs/fullobs --output-dir outputs/fullobs/evaluation --warmup 8 --expected-cycles 1460
 ```
+
+For hybrid-C YAML files, use `ocs_lda.run_ocs_lda`, not the lower-level
+`ocs_lda.cycling_3dvar_bohai` module. The lower-level module now rejects a
+hybrid-C configuration unless the Pressure adapter has been installed.
 
 The runner refuses to overwrite a non-empty output directory by default.
 The full 2023 protocol has 1460 six-hour cycles; the first eight are spin-up,
@@ -167,11 +168,14 @@ python utils/generate_gdas_osse_observations_yearly.py --network path/to/network
 The authors have rerun the experimental workflow in their research environment.
 The specific compatibility check documented for this compact code assembly is:
 
-Using the archived server inputs, the two-module model strictly loaded the
-original D32 `model_state` checkpoint. A clean one-cycle 2023 Full-observation
-hybrid-C run, with the three old model files absent, matched the archived
-background, analysis, truth and manifold-background arrays exactly (maximum
-absolute difference 0.0). This check does not by itself establish a full-year
+Using the archived server inputs, the refactored OCS-LDA model strictly loaded the
+original D32 `model_state` checkpoint. Four complete 2022 validation months
+(March, June, September and December; 488 raw and 456 evaluated cycles)
+matched the archived per-cycle numerical metrics and the saved background,
+analysis, truth and manifold-background arrays exactly. The fully renamed
+entry point and configuration were also tested separately; details and exact
+source/output directories are in [`VALIDATION_2022_V2.md`](VALIDATION_2022_V2.md).
+This check does not by itself establish a full-year
 *independent-machine* run using only the compact public code/data package.
 That is distinct from the authors' successful rerun with complete research
 assets. The compact Git/Zenodo package now includes the D32 weights and fitted

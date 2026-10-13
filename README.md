@@ -1,14 +1,15 @@
 # OCS-LDA
 
-This repository contains the core implementation of observation-conditioned structured latent data assimilation (OCS-LDA) for regional multivariate point observations over the Bohai–Yellow Sea. Historical code and result labels containing `PhySP_DA` refer to the same method.
+This repository contains the core implementation of observation-conditioned structured latent data assimilation (OCS-LDA) for regional multivariate point observations over the Bohai–Yellow Sea. The public model entry point is `ocs_lda.OCSLDA`.
 
 ## Contents
 
-- Structured autoencoder: [`models/ocs_lda.py`](models/ocs_lda.py) and [`models/ocs_lda_blocks.py`](models/ocs_lda_blocks.py)
+- Structured autoencoder: [`ocs_lda/model.py`](ocs_lda/model.py), [`ocs_lda/structured_autoencoder.py`](ocs_lda/structured_autoencoder.py) and [`ocs_lda/swin_components.py`](ocs_lda/swin_components.py)
 - Autoencoder training and six-hour forecast model: [`ocs_lda/train_bohai.py`](ocs_lda/train_bohai.py) and [`models/BohaiForecastNet.py`](models/BohaiForecastNet.py)
 - Point-observation operator and OSSE generation: [`utils/point_observation_operator.py`](utils/point_observation_operator.py) and [`utils/generate_gdas_osse_observations_yearly.py`](utils/generate_gdas_osse_observations_yearly.py)
 - Hybrid-`B_z` cycling assimilation and evaluation: [`ocs_lda/run_ocs_lda.py`](ocs_lda/run_ocs_lda.py) and [`ocs_lda/evaluate_cycling.py`](ocs_lda/evaluate_cycling.py)
 - Final experiment configurations: [`configs/final/`](configs/final/)
+- Four-month 2022 compatibility configurations and verification: [`configs/validation_2022/`](configs/validation_2022/) and [`VALIDATION_2022_V2.md`](VALIDATION_2022_V2.md)
 
 The Python implementation lives in the `ocs_lda/` package. Run its training,
 cycling and evaluation entry points from the repository root with `python -m`;
@@ -30,7 +31,7 @@ Original ERA5 and GDAS/PREPBUFR records are not redistributed in this repository
 
 ## Paper
 
-The OCS-LDA manuscript is under preparation. The paper citation and link will be added after publication.
+The paper citation and link will be added after publication.
 
 ## Licence
 

@@ -57,53 +57,13 @@ def strip_module_prefix(state):
 
 
 def load_model(cfg, checkpoint_path, device):
-    model_arch = str(cfg.get("model_arch", "swim_ir_ae")).lower()
-    if model_arch == "swim_ir_ae":
-        from models.SwimIR_AE import SwimIR_AE
-
-        model = SwimIR_AE(cfg).to(device)
-    elif model_arch in {"shared_private_swim_ir_ae", "shared_private_swimir_ae"}:
-        from models.SharedPrivateSwimIR_AE import SharedPrivateSwimIR_AE
-
-        model = SharedPrivateSwimIR_AE(cfg).to(device)
-    elif model_arch == "lda_vit_ae":
-        from models.LDA_ViT_AE import LDA_ViT_AE
-
-        model = LDA_ViT_AE(cfg).to(device)
-    elif model_arch == "lda141_ae":
-        from models.LDA141_AE import LDA141_AE
-
-        model = LDA141_AE(cfg).to(device)
-    elif model_arch in {"structured_swim_ae", "structed_swim_ae"}:
-        from models.StructedSwimAE import StructuredSwinAE
-
-        model = StructuredSwinAE(cfg).to(device)
-    elif model_arch in {
-        "structured_swim_ae_refine",
-        "structed_swim_ae_refine",
-    }:
-        from models.ocs_lda_blocks import StructuredSwinAERefine
-
-        model = StructuredSwinAERefine(cfg).to(device)
-    elif model_arch in {"structured_swim_ae_v2", "structured_swin_ae_v2"}:
-        from models.StructuredSwinAEv2 import StructuredSwinAEv2
-
-        model = StructuredSwinAEv2(cfg).to(device)
-    elif model_arch == "physp_aev2":
-        from models.PhySP_AEv2 import PhySP_AEv2
-
-        model = PhySP_AEv2(cfg).to(device)
-    elif model_arch == "physp_aev3":
-        from models.ocs_lda import PhySP_AEv3
-
-        model = PhySP_AEv3(cfg).to(device)
-    elif model_arch == "physp_aev4":
-        from models.ocs_lda import PhySP_AEv4
-
-        model = PhySP_AEv4(cfg).to(device)
-    else:
+    model_arch = str(cfg.get("model_arch", "ocs_lda")).lower()
+    if model_arch != "ocs_lda":
         raise ValueError(f"Unsupported AE model_arch={model_arch!r}")
-    ckpt = torch.load(checkpoint_path, map_location=device)
+    from ocs_lda.model import OCSLDA
+
+    model = OCSLDA(cfg).to(device)
+    ckpt = torch.load(checkpoint_path, map_location=device, weights_only=True)
     state = strip_module_prefix(ckpt["model_state"])
     model.load_state_dict(state)
     if hasattr(model, "freeze_ae"):

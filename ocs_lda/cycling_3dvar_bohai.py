@@ -47,7 +47,7 @@ from utils.point_observation_operator import (
 )
 
 
-METHODS = ["PhySP_DA"]
+METHODS = ["OCS-LDA"]
 
 
 def parse_args():
@@ -207,7 +207,7 @@ def file_sha256(path):
     return digest.hexdigest()
 
 
-def collect_physp_hub_gates(model):
+def collect_ocs_lda_hub_gates(model):
     """Return frozen Hub gate values for experiment provenance."""
     if hasattr(model, "hub_gate_values"):
         values = model.hub_gate_values(detach=True)
@@ -791,6 +791,16 @@ def main():
     unknown_methods = sorted(set(methods) - set(METHODS))
     if unknown_methods:
         raise ValueError(f"Unknown methods {unknown_methods}; available={METHODS}")
+    pressure_mode = config.get("experiment_pressure_parameterization", "block")
+    if (
+        "OCS-LDA" in methods
+        and pressure_mode != "block"
+        and not globals().get("_HYBRID_C_INSTALLED", False)
+    ):
+        raise RuntimeError(
+            "This Pressure covariance configuration requires the formal "
+            "hybrid-C entry point: python -m ocs_lda.run_ocs_lda"
+        )
     output_dir = Path(args.output_dir)
     if output_dir.exists() and any(output_dir.iterdir()) and args.resume_from is None and not args.overwrite:
         raise FileExistsError(f"Refusing to overwrite non-empty {output_dir}")
@@ -803,15 +813,15 @@ def main():
     variables = list(config["variables"])
     forecast_cfg = load_forecast_config(config["forecast_config"])
     use_lda = "LDA" in methods
-    use_physp = "PhySP_DA" in methods
+    use_ocs_lda = "OCS-LDA" in methods
     use_traditional = "Traditional" in methods
     lda_cfg = load_ae_config(config["lda_config"]) if use_lda else None
-    phy_cfg = load_ae_config(config["physp_config"]) if use_physp else None
+    ocs_lda_cfg = load_ae_config(config["ocs_lda_config"]) if use_ocs_lda else None
     if variables != list(forecast_cfg["target_vars"]):
         raise ValueError("Variable order differs from forecast model")
     if lda_cfg is not None and variables != list(lda_cfg["target_vars"]):
         raise ValueError("Variable order differs from LDA model")
-    if phy_cfg is not None and variables != list(phy_cfg["target_vars"]):
+    if ocs_lda_cfg is not None and variables != list(ocs_lda_cfg["target_vars"]):
         raise ValueError("Variable order differs from OCS-LDA model")
     with open(config["norm_stats"], "r", encoding="utf-8") as stream:
         norm_stats_raw = json.load(stream)
@@ -820,42 +830,42 @@ def main():
     print(f"Loading models on {device}", flush=True)
     forecast = load_forecast_model(forecast_cfg, config["forecast_checkpoint"], device)
     lda = load_ae_model(lda_cfg, config["lda_checkpoint"], device) if use_lda else None
-    physp = load_ae_model(phy_cfg, config["physp_checkpoint"], device) if use_physp else None
+    ocs_lda = load_ae_model(ocs_lda_cfg, config["ocs_lda_checkpoint"], device) if use_ocs_lda else None
     forecast.eval()
     if lda is not None:
         lda.eval()
-    if physp is not None:
-        physp.eval()
+    if ocs_lda is not None:
+        ocs_lda.eval()
     traditional_variance_mode = config.get("traditional_variance_mode", "channel")
     lda_bz_mode = config.get("lda_bz_mode", "channel_covariance")
-    physp_bz_mode = config.get("physp_bz_mode", "channel_covariance")
-    physp_active_branches = normalize_active_branches(
-        config.get("physp_active_branches")
+    ocs_lda_bz_mode = config.get("ocs_lda_bz_mode", "channel_covariance")
+    ocs_lda_active_branches = normalize_active_branches(
+        config.get("ocs_lda_active_branches")
     )
-    physp_analysis_decode_mode = str(
-        config.get("physp_analysis_decode_mode", "absolute_latent_state")
+    ocs_lda_analysis_decode_mode = str(
+        config.get("ocs_lda_analysis_decode_mode", "absolute_latent_state")
     )
-    if physp_analysis_decode_mode not in {
+    if ocs_lda_analysis_decode_mode not in {
         "absolute_latent_state",
         "background_anchored_increment",
     }:
         raise ValueError(
-            "physp_analysis_decode_mode must be 'absolute_latent_state' or "
+            "ocs_lda_analysis_decode_mode must be 'absolute_latent_state' or "
             "'background_anchored_increment'"
         )
-    physp_branch_slices = branch_slices_from_model(physp) if use_physp else None
-    if use_physp and physp_bz_mode == "semantic_branch_block":
-        if physp_branch_slices is None:
+    ocs_lda_branch_slices = branch_slices_from_model(ocs_lda) if use_ocs_lda else None
+    if use_ocs_lda and ocs_lda_bz_mode == "semantic_branch_block":
+        if ocs_lda_branch_slices is None:
             raise ValueError(
-                "semantic_branch_block requires a branch-structured PhySP_DA model."
+                "semantic_branch_block requires a branch-structured OCS-LDA model."
             )
-        if physp_active_branches is None:
-            physp_active_branches = list(physp_branch_slices)
-        unknown = sorted(set(physp_active_branches) - set(physp_branch_slices))
+        if ocs_lda_active_branches is None:
+            ocs_lda_active_branches = list(ocs_lda_branch_slices)
+        unknown = sorted(set(ocs_lda_active_branches) - set(ocs_lda_branch_slices))
         if unknown:
             raise ValueError(
-                f"Unknown physp_active_branches {unknown}; "
-                f"available={list(physp_branch_slices)}"
+                f"Unknown ocs_lda_active_branches {unknown}; "
+                f"available={list(ocs_lda_branch_slices)}"
             )
     bx = load_physical_bx(
         config["traditional_bx"],
@@ -869,24 +879,24 @@ def main():
         lda_bz_mode,
         "LDA",
     ) if use_lda else None
-    phy_bz_loaded = load_latent_bz(
-        config["physp_bz"],
+    ocs_lda_bz_loaded = load_latent_bz(
+        config["ocs_lda_bz"],
         device,
-        scale=float(config["physp_bz_scale"]),
-        item_scales=config.get("physp_bz_branch_scales"),
+        scale=float(config["ocs_lda_bz_scale"]),
+        item_scales=config.get("ocs_lda_bz_branch_scales"),
         item_names=(
-            physp_active_branches
-            if physp_bz_mode == "semantic_branch_block"
+            ocs_lda_active_branches
+            if ocs_lda_bz_mode == "semantic_branch_block"
             else None
         ),
-        load_covariance=physp_bz_mode != "semantic_branch_block",
-    ) if use_physp else None
-    phy_bz = select_latent_bz_mode(
-        phy_bz_loaded,
-        physp_bz_mode,
-        "PhySP_DA",
-        branch_names=physp_active_branches,
-    ) if use_physp else None
+        load_covariance=ocs_lda_bz_mode != "semantic_branch_block",
+    ) if use_ocs_lda else None
+    ocs_lda_bz = select_latent_bz_mode(
+        ocs_lda_bz_loaded,
+        ocs_lda_bz_mode,
+        "OCS-LDA",
+        branch_names=ocs_lda_active_branches,
+    ) if use_ocs_lda else None
     kernel = gaussian_kernel2d(
         config["gaussian_sigma"], config["gaussian_radius"], device, torch.float32
     ) if use_traditional else None
@@ -952,12 +962,12 @@ def main():
         "cycle_times": [value.strftime("%Y-%m-%dT%H:%M:%S") for value in cycle_times],
         "forecast_checkpoint_sha256": file_sha256(config["forecast_checkpoint"]),
         "lda_checkpoint_sha256": file_sha256(config["lda_checkpoint"]) if use_lda else None,
-        "physp_checkpoint_sha256": file_sha256(config["physp_checkpoint"]) if use_physp else None,
-        "physp_model_arch": str(phy_cfg.get("model_arch", "unknown")) if use_physp else None,
-        "physp_hub_gates": collect_physp_hub_gates(physp) if use_physp else None,
+        "ocs_lda_checkpoint_sha256": file_sha256(config["ocs_lda_checkpoint"]) if use_ocs_lda else None,
+        "ocs_lda_model_arch": str(ocs_lda_cfg.get("model_arch", "unknown")) if use_ocs_lda else None,
+        "ocs_lda_hub_gates": collect_ocs_lda_hub_gates(ocs_lda) if use_ocs_lda else None,
         "traditional_bx_sha256": file_sha256(config["traditional_bx"]) if use_traditional else None,
         "lda_bz_sha256": file_sha256(config["lda_bz"]) if use_lda else None,
-        "physp_bz_sha256": file_sha256(config["physp_bz"]) if use_physp else None,
+        "ocs_lda_bz_sha256": file_sha256(config["ocs_lda_bz"]) if use_ocs_lda else None,
         "truth_after_initialization_used_as_forecast_input": False,
         "point_observation_reduction": "sum",
         "background_loss_reduction": "sum",
@@ -977,30 +987,30 @@ def main():
         "traditional_std_minmax": [float(bx["std"].min().cpu()), float(bx["std"].max().cpu())] if use_traditional else None,
         "lda_bz_mode": str(lda_bz_mode),
         "lda_bz_shape": list(lda_bz.shape) if torch.is_tensor(lda_bz) else None,
-        "physp_bz_mode": str(physp_bz_mode),
-        "physp_bz_shape": list(phy_bz.shape) if torch.is_tensor(phy_bz) else None,
-        "physp_bz_semantic_branch_names": phy_bz.get("semantic_branch_names") if isinstance(phy_bz, dict) else None,
-        "physp_bz_semantic_branch_sizes": phy_bz.get("semantic_branch_sizes") if isinstance(phy_bz, dict) else None,
-        "physp_active_branches": physp_active_branches,
-        "physp_analysis_decode_mode": physp_analysis_decode_mode,
-        "physp_bz_loaded_item_names": (
-            phy_bz.get("loaded_item_names")
-            if isinstance(phy_bz, dict)
+        "ocs_lda_bz_mode": str(ocs_lda_bz_mode),
+        "ocs_lda_bz_shape": list(ocs_lda_bz.shape) if torch.is_tensor(ocs_lda_bz) else None,
+        "ocs_lda_bz_semantic_branch_names": ocs_lda_bz.get("semantic_branch_names") if isinstance(ocs_lda_bz, dict) else None,
+        "ocs_lda_bz_semantic_branch_sizes": ocs_lda_bz.get("semantic_branch_sizes") if isinstance(ocs_lda_bz, dict) else None,
+        "ocs_lda_active_branches": ocs_lda_active_branches,
+        "ocs_lda_analysis_decode_mode": ocs_lda_analysis_decode_mode,
+        "ocs_lda_bz_loaded_item_names": (
+            ocs_lda_bz.get("loaded_item_names")
+            if isinstance(ocs_lda_bz, dict)
             else None
         ),
-        "physp_bz_covariance_loaded": (
-            phy_bz.get("covariance_loaded")
-            if isinstance(phy_bz, dict)
+        "ocs_lda_bz_covariance_loaded": (
+            ocs_lda_bz.get("covariance_loaded")
+            if isinstance(ocs_lda_bz, dict)
             else None
         ),
-        "physp_bz_branch_scale_multipliers": (
-            phy_bz.get("latent_bz_item_scale_multipliers")
-            if isinstance(phy_bz, dict)
+        "ocs_lda_bz_branch_scale_multipliers": (
+            ocs_lda_bz.get("latent_bz_item_scale_multipliers")
+            if isinstance(ocs_lda_bz, dict)
             else None
         ),
-        "physp_bz_effective_branch_scales": (
-            phy_bz.get("latent_bz_effective_item_scales")
-            if isinstance(phy_bz, dict)
+        "ocs_lda_bz_effective_branch_scales": (
+            ocs_lda_bz.get("latent_bz_effective_item_scales")
+            if isinstance(ocs_lda_bz, dict)
             else None
         ),
     }
@@ -1070,21 +1080,21 @@ def main():
                 config["early_stopping_patience"],
                 config["early_stopping_tolerance"],
             )
-        if "PhySP_DA" in methods:
-            analyses["PhySP_DA"], manifolds["PhySP_DA"], _, logs["PhySP_DA"] = optimize_latent(
-                physp,
-                cycle_backgrounds["PhySP_DA"],
+        if "OCS-LDA" in methods:
+            analyses["OCS-LDA"], manifolds["OCS-LDA"], _, logs["OCS-LDA"] = optimize_latent(
+                ocs_lda,
+                cycle_backgrounds["OCS-LDA"],
                 point_obs,
                 variables,
                 stats,
-                phy_bz,
-                config.get("physp_optimizer_lr", config["optimizer_lr"]),
+                ocs_lda_bz,
+                config.get("ocs_lda_optimizer_lr", config["optimizer_lr"]),
                 config["optimizer_max_steps"],
                 config["optimizer_grad_clip"],
                 config["early_stopping_patience"],
                 config["early_stopping_tolerance"],
-                active_branches=physp_active_branches,
-                analysis_decode_mode=physp_analysis_decode_mode,
+                active_branches=ocs_lda_active_branches,
+                analysis_decode_mode=ocs_lda_analysis_decode_mode,
             )
 
         for method in methods:

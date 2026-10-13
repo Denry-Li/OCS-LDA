@@ -2,7 +2,7 @@
 
 The module deliberately separates the model-specific control-to-state mapping
 from the common physical-space observation mapping.  Traditional grid-space
-3DVar, LDA and PhySP_DA therefore use exactly the same interpolation weights,
+3DVar, LDA and OCS-LDA therefore use exactly the same interpolation weights,
 physical units and diagonal observation-error variances.
 """
 

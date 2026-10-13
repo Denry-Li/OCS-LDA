@@ -624,12 +624,11 @@ class AEReconstructionLoss(nn.Module):
 
 class StructuredAEReconstructionLoss(nn.Module):
     """
-    Training loss adapter for models.StructedSwimAE.StructuredSwinAE.
+    Training loss adapter for OCS-LDA's structured autoencoder.
 
     The model returns a dictionary with x_hat, x_base_low, and branches when
     return_parts=True. This adapter delegates the actual structured terms to
-    models.StructedSwimAE.structured_ae_loss and normalizes the log names used
-    by train_bohai.py.
+    the packaged structured loss and normalizes the log names used by training.
     """
 
     def __init__(self, cfg, target_vars: list[str]):
@@ -671,16 +670,17 @@ class StructuredAEReconstructionLoss(nn.Module):
         self.low_sigma = float(cfg.get("structured_low_sigma", cfg.get("low_sigma", 1.0)))
 
     def forward(self, pred, target):
-        from models.StructedSwimAE import StructuredSwinAE, structured_ae_loss
+        from ocs_lda.model import OCSLDA
+        from ocs_lda.swin_components import structured_ae_loss
 
         if not isinstance(pred, dict):
             raise TypeError(
-                "StructuredAEReconstructionLoss expects StructedSwimAE output "
+                "StructuredAEReconstructionLoss expects OCSLDA output "
                 "dict. Ensure forward_model calls model(..., return_parts=True)."
             )
 
         loss_dict = structured_ae_loss(
-            model=StructuredSwinAE,
+            model=OCSLDA,
             output=pred,
             target=target,
             var_weights=self.var_weights,

@@ -1,1 +1,5 @@
-"""Core modules and command-line entry points for OCS-LDA."""
+"""OCS-LDA model package."""
+
+from .model import OCSLDA
+
+__all__ = ["OCSLDA"]
