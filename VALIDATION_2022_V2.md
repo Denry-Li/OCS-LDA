@@ -31,3 +31,22 @@ The renamed branch was also checked separately in `/home/lidunlei/Project/OCS-LD
 The hybrid-C Pressure adapter is installed by the formal entry point. Invoking `python -m ocs_lda.cycling_3dvar_bohai` directly with a hybrid-C YAML bypassed that adapter and produced different analyses. The refactor now rejects this invocation before creating an output directory; the formal wrapper remains the supported entry point. A guarded one-cycle wrapper run reproduced the archived metrics and state arrays exactly.
 
 These checks use the authors' complete server-side research inputs. They do not imply that the compact GitHub/Zenodo release alone includes all ERA5 and prepared-network assets needed for a clean-machine rerun, or that an entirely new model training run has been performed.
+
+## Import and final-configuration checks
+
+The assembled repository passed `python -m compileall -q ocs_lda models utils` and the following tests in the authors' DA environment:
+
+- `python -m ocs_lda.tests.test_imports`: all 17 supported package/runtime modules import, including the public `ocs_lda.OCSLDA`, forecast inference, training, observation operator, cycling wrapper and evaluation.
+- `python -m ocs_lda.tests.test_configs`: all nine released cycling YAML configurations (five final 2023 scenarios and four 2022 validation months) resolve to the included D32 model YAML and use the `OCS-LDA` method name.
+- `python -m ocs_lda.tests.test_training_step`: model forward pass, structured loss and backward pass produce a finite loss and finite gradients.
+- `python -m ocs_lda.tests.test_final_smokes --runs-dir validation_runs`: each of the five final 2023 YAML scenarios completes one cycle through `python -m ocs_lda.run_ocs_lda`, loads the model and hybrid-C `B_z`, and writes finite five-variable analysis states.
+
+| Final scenario | Active branches | Optimized latent elements |
+|---|---|---:|
+| Full observation | Shared + Wind + Thermo-moist + Pressure | 3200 |
+| No-SP Selective | Shared + Wind + Thermo-moist | 2800 |
+| No-SP Full-update | Shared + Wind + Thermo-moist + Pressure | 3200 |
+| No-D2M | Shared + Wind + Thermo-moist + Pressure | 3200 |
+| Shared-off | Wind + Thermo-moist + Pressure | 2000 |
+
+These are entry-point/import smoke tests for the 2023 scenarios, **not** new complete 2023 annual reruns. The separate full-month and four-month numerical-equivalence checks are reported above.
